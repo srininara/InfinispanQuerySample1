@@ -68,7 +68,8 @@ public abstract class AbstractReporter {
 		msgBuilder.append(output.getTaskName());
 		msgBuilder.append(" completed in ");
 		msgBuilder.append(output.getExecutionTime());
-		msgBuilder.append(" milli seconds.");
+		msgBuilder.append(" milli seconds with result as - ");
+		msgBuilder.append(output.getResultMessage());
 		writer.println(msgBuilder.toString());
 		writer.flush();
 	}

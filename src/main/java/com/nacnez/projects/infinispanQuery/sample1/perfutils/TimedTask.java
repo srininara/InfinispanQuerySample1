@@ -13,19 +13,20 @@ public abstract class TimedTask {
 		this.reporter = reporter;
 	}
 	
-	
 	public void execute() throws Exception {
         long fillStartTime = System.currentTimeMillis();
         doExecute();
 		finishedTimeInMilliSecs = (System.currentTimeMillis()-fillStartTime);
-		pushDataToReporter();
+		pushDataToReporter(getResult());
 	}
 	
-	
-	
-	private void pushDataToReporter() {
-		TimedTaskOutput output = new TimedTaskOutput(taskName,finishedTimeInMilliSecs);
+	private void pushDataToReporter(String resultMessage) {
+		TimedTaskOutput output = new TimedTaskOutput(taskName,finishedTimeInMilliSecs,resultMessage);
 		reporter.collect(output);
+	}
+	
+	protected String getResult() {
+		return null; // Default implementation does nothing.
 	}
 
 	protected abstract void doExecute() throws Exception;

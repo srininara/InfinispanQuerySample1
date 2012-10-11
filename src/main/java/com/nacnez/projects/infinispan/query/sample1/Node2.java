@@ -51,71 +51,72 @@ public class Node2 extends AbstractNode {
 
 	public void run() throws Exception {
 		Cache<String, Person> cache = getCacheManager().getCache("Person");
-		// waitForClusterToForm();
 
 		try {
-			Thread.sleep(5000);
+			Thread.sleep(2000);
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}
 		cache.clear();
 
-		// cache.getAdvancedCache().
-
-		
-		
 		// Add a listener so that we can see the puts to this node
 		cache.addListener(new LoggingListener());
 
 		// Put a few entries into the cache so that we can see them distribution
 		// to the other nodes
-		Collection<Person> data = createData(50);
+		Collection<Person> data = createData(5000);
 
 		int generatedDataBasedExpectedCount = 0;
 		List<String> personIds = new ArrayList<String>();
 		PersonFilter pf = new PersonCityFilter("Bangalore");
 
-		// Directory directory = new InfinispanDirectory(cache);
-
+		System.out.println("Started Loading the grid");
+		
 		for (Person p : data) {
 			personIds.add(p.getUniqueId());
 			if (pf.applicable(p)) {
 				generatedDataBasedExpectedCount++;
 			}
 			cache.put(p.getUniqueId(), p);
-			// directory.
 		}
+		System.out.println("Expected Result: " + generatedDataBasedExpectedCount);
 
-		// System.out.println("Total cache size: " + cache.size());
-
-		// SearchManager searchManager = org.infinispan.query.Search
-		// .getSearchManager(cache);
-		// QueryBuilder qb =
-		// searchManager.getSearchFactory().buildQueryBuilder()
-		// .forEntity(Person.class).get();
-		// Query query = qb.keyword().onFields("city").matching("Bangalore")
-		// .createQuery();
-		// CacheQuery cacheQuery = searchManager.getQuery(query);
-		// int qCount = cacheQuery.getResultSize();
-		// List<Object> found = cacheQuery.list();
 		Reporter reporter = new StdOutReporter(true);
 
-//		doDistributedTaskQuery(cache);
-		executeQuery(reporter,QUERY_REPEATS,cache);
-		System.out.println("Expected Result: "
-				+ generatedDataBasedExpectedCount);
+		executeQuery(reporter, QUERY_REPEATS, cache);
 
-		// cache.clear();
+		reporter.report();
+//		getCacheManager().getTransport().stop();
+//		getCacheManager().stop();
 	}
 
-	private void doDistributedTaskQuery(Cache<String, Person> cache)
+	private void executeQuery(Reporter reporter, int queryRepeats,
+			final Cache<String, Person> cache) throws Exception {
+		for (int i = 0; i < queryRepeats; i++) {
+			TimedTask distributedTaskQuery = new TimedTask(
+					"DistributedTask Query", reporter) {
+				String output;
+				@Override
+				protected void doExecute() throws Exception {
+					output = doDistributedTaskQuery(cache);
+				}
+				
+				@Override
+				protected String getResult() {
+					return output;
+				}
+				
+			};
+			distributedTaskQuery.execute();
+		}
+		
+	}
+
+	private String doDistributedTaskQuery(Cache<String, Person> cache)
 			throws InterruptedException, ExecutionException {
 		DistributedExecutorService des = new DefaultExecutorService(cache);
 		PersonCountCallable pcc = new PersonCountCallable(new PersonCityFilter(
 				"Bangalore"));
-		// List<Future<Integer>> results =
-		// des.submitEverywhere(pcc,personIds.toArray());
-		long queryStartTime = System.currentTimeMillis();
 		List<Future<Integer>> results = des.submitEverywhere(pcc);
 		int personCount = 0;
 		int distCount = 0;
@@ -126,11 +127,7 @@ public class Node2 extends AbstractNode {
 			personCount = distCount / replicationCount;
 			personCount = (distCount % 2 == 0) ? personCount : personCount + 1;
 		}
-
-		long finishedTimeInMilliSecs = (System.currentTimeMillis() - queryStartTime);
-
-		System.out.println("Distributed task count output: " + personCount
-				+ " completed in " + finishedTimeInMilliSecs + " millisecs.");
+		return "Count: " + personCount;
 	}
 
 	@Override
@@ -138,18 +135,5 @@ public class Node2 extends AbstractNode {
 		return 2;
 	}
 
-	private void executeQuery(Reporter reporter, int queryRepeats, final Cache<String, Person> cache )
-			throws Exception {
-		for (int i = 0; i < queryRepeats; i++) {
-			TimedTask distributedTaskQuery = new TimedTask(
-					"DistributedTask Query", reporter) {
-				@Override
-				protected void doExecute() throws Exception {
-					doDistributedTaskQuery(cache);
-				}
-			};
-			distributedTaskQuery.execute();
-		}
-	}
 
 }
