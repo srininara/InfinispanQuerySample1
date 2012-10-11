@@ -24,6 +24,8 @@ package com.nacnez.projects.infinispan.query.sample1;
 
 import org.infinispan.Cache;
 
+import com.nacnez.projects.infinispan.query.sample1.model.Person;
+
 public class Node1 extends AbstractNode {
 
    public static void main(String[] args) throws Exception {
@@ -31,12 +33,12 @@ public class Node1 extends AbstractNode {
    }
 
    public void run() {
-      Cache<String, String> cache = getCacheManager().getCache("Demo");
+      Cache<String, Person> cache = getCacheManager().getCache("Person");
       
       // Add a listener so that we can see the puts to this node
       cache.addListener(new LoggingListener());
 
-      waitForClusterToForm();
+//      waitForClusterToForm();
    }
    
    @Override

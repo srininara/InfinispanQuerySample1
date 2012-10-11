@@ -22,19 +22,30 @@
  */
 package com.nacnez.projects.infinispan.query.sample1;
 
+import java.io.IOException;
+import java.lang.annotation.ElementType;
+import java.util.Properties;
+
+import org.hibernate.search.cfg.SearchMapping;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
-import com.nacnez.projects.infinispan.query.sample1.ClusterValidation;
 
-import java.io.IOException;
+import com.nacnez.projects.infinispan.query.sample1.model.Person;
 
 @SuppressWarnings("unused")
 public abstract class AbstractNode {
    
    private static EmbeddedCacheManager createCacheManagerProgramatically() {
+	   SearchMapping mapping = new SearchMapping();
+	   mapping.entity(Person.class).indexed().providedId()
+	         .property("city", ElementType.METHOD).field();
+	    
+	   Properties properties = new Properties();
+	   properties.put(org.hibernate.search.Environment.MODEL_MAPPING, mapping);
+ 
       return new DefaultCacheManager(
             GlobalConfigurationBuilder.defaultClusteredBuilder()
                   .transport().addProperty("configurationFile", "jgroups.xml")
@@ -43,6 +54,10 @@ public abstract class AbstractNode {
                   .clustering()
                      .cacheMode(CacheMode.DIST_SYNC)
                      .hash().numOwners(2)
+                  .indexing()
+                  	 .enable()
+                  	 .indexLocalOnly(true)
+            		 .withProperties(properties)
                   .build()
       );
    }
