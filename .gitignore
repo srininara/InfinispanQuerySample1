@@ -2,5 +2,5 @@
 .project
 .settings/
 bin/
-com/
+com.nacnez.projects.infinispan.query.sample1.model.Person/
 target/
