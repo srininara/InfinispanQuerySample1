@@ -14,7 +14,6 @@ public class PersonCountCallable implements DistributedCallable<String, Person,I
 	private static final long serialVersionUID = 1L;
 
 	private Cache<String, Person> cache;
-	private Set<String> inputKeys;
 	
 	private PersonFilter filter;
 
@@ -25,14 +24,12 @@ public class PersonCountCallable implements DistributedCallable<String, Person,I
 	@Override
 	public Integer call() throws Exception {
 		int count = 0;
-//		System.out.println("input: " + inputKeys.size());
 		for (String key : cache.keySet()) {
 			Person p = cache.get(key);
 			if (filter.applicable(p)) {
 				count++;
 			}
 		}
-//		System.out.println("output: "+ count);
 		return count;
 	}
 
@@ -40,8 +37,6 @@ public class PersonCountCallable implements DistributedCallable<String, Person,I
 	public void setEnvironment(Cache<String, Person> cache,
 			Set<String> inputKeys) {
 		this.cache = cache;
-		this.inputKeys = inputKeys;
-		
 	}
 
 }

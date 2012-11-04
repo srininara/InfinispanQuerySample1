@@ -64,9 +64,10 @@ public class Node2 extends AbstractNode {
 
 		// Put a few entries into the cache so that we can see them distribution
 		// to the other nodes
-		Collection<Person> data = createData(5000);
+		Collection<Person> data = createData(12000);
 
 		int generatedDataBasedExpectedCount = 0;
+		int totalCount = 0;
 		List<String> personIds = new ArrayList<String>();
 		PersonFilter pf = new PersonCityFilter("Bangalore");
 
@@ -78,9 +79,20 @@ public class Node2 extends AbstractNode {
 				generatedDataBasedExpectedCount++;
 			}
 			cache.put(p.getUniqueId(), p);
+			totalCount++;
+			if (totalCount%500==0) {
+				System.out.println("500 more added to Grid!");
+			}
 		}
 		System.out.println("Expected Result: " + generatedDataBasedExpectedCount);
 
+		try {
+			Thread.sleep(3000);
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+
+		
 		Reporter reporter = new StdOutReporter(true);
 
 		executeQuery(reporter, QUERY_REPEATS, cache);

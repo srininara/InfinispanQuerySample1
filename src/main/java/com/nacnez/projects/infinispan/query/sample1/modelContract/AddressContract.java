@@ -2,7 +2,6 @@ package com.nacnez.projects.infinispan.query.sample1.modelContract;
 
 import com.nacnez.util.modelgen.GenerationContract;
 import com.nacnez.util.modelgen.TargetModel;
-import com.nacnez.util.modelgen.generator.rules.Alphabetic;
 import com.nacnez.util.modelgen.generator.rules.Alphanumeric;
 import com.nacnez.util.modelgen.generator.rules.FromList;
 import com.nacnez.util.modelgen.generator.rules.Limit;

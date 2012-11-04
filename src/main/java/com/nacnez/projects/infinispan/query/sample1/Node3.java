@@ -22,33 +22,28 @@
  */
 package com.nacnez.projects.infinispan.query.sample1;
 
-import org.infinispan.notifications.Listener;
-import org.infinispan.notifications.cachelistener.annotation.CacheEntryCreated;
-import org.infinispan.notifications.cachelistener.annotation.CacheEntryRemoved;
-import org.infinispan.notifications.cachelistener.event.CacheEntryCreatedEvent;
-import org.infinispan.notifications.cachelistener.event.CacheEntryRemovedEvent;
+import org.infinispan.Cache;
 
-/**
- * An Infinispan listener that simply logs cache entries being created and
- * removed
- * 
- * @author Pete Muir
- * 
- */
-@Listener
-public class LoggingListener {
+import com.nacnez.projects.infinispan.query.sample1.model.Person;
 
- //  private Log log = LogFactory.getLog(LoggingListener.class);
+public class Node3 extends AbstractNode {
 
-   @CacheEntryCreated
-   public void observeAdd(CacheEntryCreatedEvent<?, ?> event) {
-//      if (!event.isPre()) // So that message is only logged after operation succeeded
-//         log.infof("Cache entry with key %s added in cache %s", event.getKey(), event.getCache());
+   public static void main(String[] args) throws Exception {
+      new Node3().run();
    }
 
-   @CacheEntryRemoved
-   public void observeRemove(CacheEntryRemovedEvent<?, ?> event) {
-//      log.infof("Cache entry with key %s removed in cache %s", event.getKey(), event.getCache());
+   public void run() {
+      Cache<String, Person> cache = getCacheManager().getCache("Person");
+      
+      // Add a listener so that we can see the puts to this node
+      cache.addListener(new LoggingListener());
+
+//      waitForClusterToForm();
+   }
+   
+   @Override
+   protected int getNodeId() {
+      return 3;
    }
 
 }
