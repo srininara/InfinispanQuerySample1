@@ -64,7 +64,7 @@ public class Node2 extends AbstractNode {
 
 		// Put a few entries into the cache so that we can see them distribution
 		// to the other nodes
-		Collection<Person> data = createData(12000);
+		Collection<Person> data = createData(500);
 
 		int generatedDataBasedExpectedCount = 0;
 		int totalCount = 0;
@@ -98,8 +98,6 @@ public class Node2 extends AbstractNode {
 		executeQuery(reporter, QUERY_REPEATS, cache);
 
 		reporter.report();
-//		getCacheManager().getTransport().stop();
-//		getCacheManager().stop();
 	}
 
 	private void executeQuery(Reporter reporter, int queryRepeats,
@@ -131,13 +129,14 @@ public class Node2 extends AbstractNode {
 				"Bangalore"));
 		List<Future<Integer>> results = des.submitEverywhere(pcc);
 		int personCount = 0;
-		int distCount = 0;
+//		int distCount = 0;
 		for (Future<Integer> f : results) {
-			distCount += f.get();
-			int replicationCount = cache.getCacheConfiguration().clustering()
-					.hash().numOwners();
-			personCount = distCount / replicationCount;
-			personCount = (distCount % 2 == 0) ? personCount : personCount + 1;
+			personCount += f.get();
+//			distCount += f.get();
+//			int replicationCount = cache.getCacheConfiguration().clustering()
+//					.hash().numOwners();
+//			personCount = distCount / replicationCount;
+//			personCount = (distCount % 2 == 0) ? personCount : personCount + 1;
 		}
 		return "Count: " + personCount;
 	}
