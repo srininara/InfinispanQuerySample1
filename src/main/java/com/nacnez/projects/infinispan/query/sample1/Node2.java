@@ -129,14 +129,8 @@ public class Node2 extends AbstractNode {
 				"Bangalore"));
 		List<Future<Integer>> results = des.submitEverywhere(pcc);
 		int personCount = 0;
-//		int distCount = 0;
 		for (Future<Integer> f : results) {
 			personCount += f.get();
-//			distCount += f.get();
-//			int replicationCount = cache.getCacheConfiguration().clustering()
-//					.hash().numOwners();
-//			personCount = distCount / replicationCount;
-//			personCount = (distCount % 2 == 0) ? personCount : personCount + 1;
 		}
 		return "Count: " + personCount;
 	}
