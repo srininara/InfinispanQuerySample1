@@ -23,8 +23,7 @@
 package com.nacnez.projects.infinispan.query.sample1;
 
 import org.infinispan.Cache;
-
-import com.nacnez.projects.infinispan.query.sample1.model.Person;
+import com.nacnez.projects.grid.model.Person;
 
 public class Node1 extends AbstractNode {
 

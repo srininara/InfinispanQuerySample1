@@ -1,8 +1,10 @@
 package com.nacnez.projects.infinispan.query.sample1.filter;
 
-import com.nacnez.projects.infinispan.query.sample1.model.Person;
+import java.io.Serializable;
 
-public interface PersonFilter {
+import com.nacnez.projects.grid.model.Person;
+
+public interface PersonFilter extends Serializable {
 	
 	boolean applicable(Person p);
 

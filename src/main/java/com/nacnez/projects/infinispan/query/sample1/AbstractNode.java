@@ -33,65 +33,47 @@ import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 
-import com.nacnez.projects.infinispan.query.sample1.model.Person;
+import com.nacnez.projects.grid.model.Person;
 
 @SuppressWarnings("unused")
 public abstract class AbstractNode {
-   
-   private static EmbeddedCacheManager createCacheManagerProgramatically() {
-	   SearchMapping mapping = new SearchMapping();
-	   mapping.entity(Person.class).indexed().providedId()
-	         .property("city", ElementType.METHOD).field();
-	    
-	   Properties properties = new Properties();
-	   properties.put(org.hibernate.search.Environment.MODEL_MAPPING, mapping);
- 
-      return new DefaultCacheManager(
-            GlobalConfigurationBuilder.defaultClusteredBuilder()
-                  .transport().addProperty("configurationFile", "jgroups.xml")
-                  .build(),
-            new ConfigurationBuilder()
-                  .clustering()
-                     .cacheMode(CacheMode.DIST_SYNC)
-                     .hash().numOwners(2)
-                  .indexing()
-                  	 .enable()
-                  	 .indexLocalOnly(true)
-            		 .withProperties(properties)
-                  .build()
-      );
-   }
 
-   private static EmbeddedCacheManager createCacheManagerFromXml() throws IOException {
-      return new DefaultCacheManager("infinispan-distribution.xml");
-   }
-   
-   public static final int CLUSTER_SIZE = 3;
+	private static EmbeddedCacheManager createCacheManagerProgramatically() {
+		return new DefaultCacheManager(GlobalConfigurationBuilder
+				.defaultClusteredBuilder().transport()
+				.addProperty("configurationFile", "jgroups.xml").build(),
+				new ConfigurationBuilder().clustering()
+						.cacheMode(CacheMode.DIST_SYNC).hash().numOwners(2)
+						.build());
+	}
 
-   private final EmbeddedCacheManager cacheManager;
-   
-   public AbstractNode() {
-      this.cacheManager = createCacheManagerProgramatically();
-      // Uncomment to create cache from XML
-      // try {
-      //    this.cacheManager = createCacheManagerFromXml();
-      // } catch (IOException e) {
-      //    throw new RuntimeException(e);
-      // }
-   }
-   
-   protected EmbeddedCacheManager getCacheManager() {
-      return cacheManager;
-   }
-   
-   protected void waitForClusterToForm() {
-      // Wait for the cluster to form, erroring if it doesn't form after the
-      // timeout
-      if (!ClusterValidation.waitForClusterToForm(getCacheManager(), getNodeId(), CLUSTER_SIZE)) {
-         throw new IllegalStateException("Error forming cluster, check the log");
-      }
-   }
-   
-   protected abstract int getNodeId();
-   
+	private static EmbeddedCacheManager createCacheManagerFromXml()
+			throws IOException {
+		return new DefaultCacheManager("infinispan-distribution.xml");
+	}
+
+	public static final int CLUSTER_SIZE = 3;
+
+	private final EmbeddedCacheManager cacheManager;
+
+	public AbstractNode() {
+		this.cacheManager = createCacheManagerProgramatically();
+	}
+
+	protected EmbeddedCacheManager getCacheManager() {
+		return cacheManager;
+	}
+
+	protected void waitForClusterToForm() {
+		// Wait for the cluster to form, erroring if it doesn't form after the
+		// timeout
+		if (!ClusterValidation.waitForClusterToForm(getCacheManager(),
+				getNodeId(), CLUSTER_SIZE)) {
+			throw new IllegalStateException(
+					"Error forming cluster, check the log");
+		}
+	}
+
+	protected abstract int getNodeId();
+
 }

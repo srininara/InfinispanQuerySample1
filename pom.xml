@@ -14,13 +14,34 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<infinispan.version>5.1.6.FINAL</infinispan.version>
 	</properties>
+	<repositories>
+		<repository>
+			<id>local</id>
+			<url>file:${basedir}/repository</url>
+		</repository>
+	</repositories>
 
 	<dependencies>
 		<dependency>
 			<groupId>junit</groupId>
 			<artifactId>junit</artifactId>
-			<version>3.8.1</version>
+			<version>[4.8.2,4.9)</version>
 			<scope>test</scope>
+		</dependency>
+		<dependency> <!-- local dependency in repository -->
+			<groupId>JSci</groupId>
+			<artifactId>jsci-core</artifactId>
+			<version>0.945</version>
+		</dependency>
+		<dependency> <!-- local dependency in repository -->
+			<groupId>mt</groupId>
+			<artifactId>mt</artifactId>
+			<version>13</version>
+		</dependency>
+		<dependency> <!-- local dependency in repository -->
+			<groupId>bb</groupId>
+			<artifactId>bb</artifactId>
+			<version>1.0</version>
 		</dependency>
 
 		<dependency>
@@ -47,6 +68,16 @@
 		<dependency>
 			<groupId>com.nacnez.util.</groupId>
 			<artifactId>modelgen</artifactId>
+			<version>0.0.1-SNAPSHOT</version>
+		</dependency>
+		<dependency>
+			<groupId>com.nacnez.util</groupId>
+			<artifactId>microbenchmarktool</artifactId>
+			<version>0.0.1-SNAPSHOT</version>
+		</dependency>
+		<dependency>
+			<groupId>com.nacnez.projects.grid.model</groupId>
+			<artifactId>GridModelGeneration</artifactId>
 			<version>0.0.1-SNAPSHOT</version>
 		</dependency>
 	</dependencies>

@@ -2,7 +2,7 @@ package com.nacnez.projects.infinispan.query.sample1.filter;
 
 import java.io.Serializable;
 
-import com.nacnez.projects.infinispan.query.sample1.model.Person;
+import com.nacnez.projects.grid.model.Person;
 
 public class PersonCityFilter implements PersonFilter, Serializable {
 	

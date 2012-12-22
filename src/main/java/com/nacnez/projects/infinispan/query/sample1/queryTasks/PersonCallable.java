@@ -1,17 +1,19 @@
-package com.nacnez.projects.infinispan.query.sample1;
+package com.nacnez.projects.infinispan.query.sample1.queryTasks;
 
 import java.io.Serializable;
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.Set;
 
 import org.infinispan.Cache;
 import org.infinispan.distexec.DistributedCallable;
 import org.infinispan.remoting.transport.Address;
 
+import com.nacnez.projects.grid.model.Person;
 import com.nacnez.projects.infinispan.query.sample1.filter.PersonFilter;
-import com.nacnez.projects.infinispan.query.sample1.model.Person;
 
-public class PersonCountCallable implements
-		DistributedCallable<String, Person, Integer>, Serializable {
+public class PersonCallable implements
+		DistributedCallable<String, Person, Collection<Person>>, Serializable {
 
 	private static final long serialVersionUID = 1L;
 
@@ -19,13 +21,13 @@ public class PersonCountCallable implements
 
 	private PersonFilter filter;
 
-	public PersonCountCallable(PersonFilter filter) {
+	public PersonCallable(PersonFilter filter) {
 		this.filter = filter;
 	}
 
 	@Override
-	public Integer call() throws Exception {
-		int count = 0;
+	public Collection<Person> call() throws Exception {
+		Collection<Person> persons = new HashSet<Person>();
 		for (String key : cache.keySet()) {
 //			if (cache.getAdvancedCache().getDistributionManager().getLocality(key).isLocal()) { // Somehow this did not work
 			Address expectedAddr = cache.getAdvancedCache().getDistributionManager().getPrimaryLocation(key);
@@ -33,11 +35,11 @@ public class PersonCountCallable implements
 			if (expectedAddr.equals(currAddr)) {
 				Person p = cache.get(key);
 				if (filter.applicable(p)) {
-					count++;
+					persons.add(p);
 				}
 			}
 		}
-		return count;
+		return persons;
 	}
 
 	@Override

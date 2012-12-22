@@ -22,28 +22,30 @@
  */
 package com.nacnez.projects.infinispan.query.sample1;
 
-import static com.nacnez.projects.infinispan.query.sample1.DataCreator.createData;
+import static com.nacnez.projects.grid.modelCreator.DataCreator.createData;
+import static com.nacnez.util.microbenchmarktool.MicroBenchmarkTool.newSimpleExecutor;
+import static com.nacnez.util.microbenchmarktool.MicroBenchmarkTool.newStandardOutputReporter;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
 
 import org.infinispan.Cache;
-import org.infinispan.distexec.DefaultExecutorService;
-import org.infinispan.distexec.DistributedExecutorService;
 
+import com.nacnez.projects.grid.model.Person;
+import com.nacnez.projects.infinispan.query.sample1.filter.GMTClosePersonFilter;
+import com.nacnez.projects.infinispan.query.sample1.filter.LadyFiveDigitSalaryGettersFilter;
 import com.nacnez.projects.infinispan.query.sample1.filter.PersonCityFilter;
 import com.nacnez.projects.infinispan.query.sample1.filter.PersonFilter;
-import com.nacnez.projects.infinispan.query.sample1.model.Person;
-import com.nacnez.projects.infinispanQuery.sample1.perfutils.Reporter;
-import com.nacnez.projects.infinispanQuery.sample1.perfutils.StdOutReporter;
-import com.nacnez.projects.infinispanQuery.sample1.perfutils.TimedTask;
+import com.nacnez.projects.infinispan.query.sample1.queryTasks.BangalorePersonCountQueryTask;
+import com.nacnez.projects.infinispan.query.sample1.queryTasks.BangalorePersonQueryTask;
+import com.nacnez.projects.infinispan.query.sample1.queryTasks.GMTPersonQueryTask;
+import com.nacnez.projects.infinispan.query.sample1.queryTasks.PersonAverageSalQueryTask;
+import com.nacnez.projects.infinispan.query.sample1.queryTasks.TimeWastingTask;
+import com.nacnez.util.microbenchmarktool.TimedTask;
 
 public class Node2 extends AbstractNode {
 
-	private static final int QUERY_REPEATS = 10;
 
 	public static void main(String[] args) throws Exception {
 		new Node2().run();
@@ -64,27 +66,39 @@ public class Node2 extends AbstractNode {
 
 		// Put a few entries into the cache so that we can see them distribution
 		// to the other nodes
-		Collection<Person> data = createData(500);
+		Collection<Person> data = createData(1000);
 
-		int generatedDataBasedExpectedCount = 0;
+		int generatedDataBasedExpectedCountCity = 0;
+		int generatedDataBasedExpectedCountLadyAvg = 0;
+		Double generatedDataBasedExpectedSalLadyAvg = new Double(0.0);
+		int generatedDataBasedExpectedCountGMT = 0;
 		int totalCount = 0;
 		List<String> personIds = new ArrayList<String>();
 		PersonFilter pf = new PersonCityFilter("Bangalore");
+		PersonFilter pfl = new LadyFiveDigitSalaryGettersFilter();
+		PersonFilter pfg = new GMTClosePersonFilter();
+		
 
 		System.out.println("Started Loading the grid");
 		
 		for (Person p : data) {
 			personIds.add(p.getUniqueId());
 			if (pf.applicable(p)) {
-				generatedDataBasedExpectedCount++;
+				generatedDataBasedExpectedCountCity++;
+			}
+			if (pfl.applicable(p)) {
+				generatedDataBasedExpectedSalLadyAvg = generatedDataBasedExpectedSalLadyAvg +p.getIncome();
+				generatedDataBasedExpectedCountLadyAvg++;
+			}
+			if (pfg.applicable(p)) {
+				generatedDataBasedExpectedCountGMT++;
 			}
 			cache.put(p.getUniqueId(), p);
 			totalCount++;
-			if (totalCount%500==0) {
-				System.out.println("500 more added to Grid!");
+			if (totalCount%1000==0) {
+				System.out.println("1000 more added to Grid!");
 			}
 		}
-		System.out.println("Expected Result: " + generatedDataBasedExpectedCount);
 
 		try {
 			Thread.sleep(3000);
@@ -92,49 +106,48 @@ public class Node2 extends AbstractNode {
 			e.printStackTrace();
 		}
 
+//		newSimpleExecutor().with(newStatRichSimpleStandardOutputReporter()).execute(createBangalorePersonCountQuery(cache), 50).report();
+//		newSimpleExecutor().with(newStatRichSimpleStandardOutputReporter()).execute(createBangalorePersonQuery(cache), 50).report();
+//		newSimpleExecutor().with(newStatRichSimpleStandardOutputReporter()).execute(createGMTPersonQuery(cache), 50).report();
+//		newSimpleExecutor().with(newStatRichSimpleStandardOutputReporter()).execute(createLadyAvgSalQuery(cache), 50).report();
+
+//		System.out.println("Expected Result Bangalore : " + generatedDataBasedExpectedCountCity);
+//		newSimpleExecutor().with(newStatRichStandardOutputReporter()).execute(createBangalorePersonCountQuery(cache), 50).report();
+//		System.out.println("Expected Result  Bangalore : " + generatedDataBasedExpectedCountCity);
+//		newSimpleExecutor().with(newStatRichStandardOutputReporter()).execute(createBangalorePersonQuery(cache), 50).report();
+//		System.out.println("Expected Result GMT: " + generatedDataBasedExpectedCountGMT);
+//		newSimpleExecutor().with(newStatRichStandardOutputReporter()).execute(createGMTPersonQuery(cache), 50).report();
+//		System.out.println("Expected Result Lady Avg: " + generatedDataBasedExpectedSalLadyAvg/generatedDataBasedExpectedCountLadyAvg);
+//		System.out.println("Expected Result Lady Sal Sum: " + generatedDataBasedExpectedSalLadyAvg);
+//		System.out.println("Expected Result Lady Count: " + generatedDataBasedExpectedCountLadyAvg);
+//
+//		newSimpleExecutor().with(newStatRichStandardOutputReporter()).execute(createLadyAvgSalQuery(cache), 50).report();
 		
-		Reporter reporter = new StdOutReporter(true);
+		newSimpleExecutor().with(newStandardOutputReporter()).execute(createTimeWasteTask(cache), 1).report();
 
-		executeQuery(reporter, QUERY_REPEATS, cache);
-
-		reporter.report();
 	}
 
-	private void executeQuery(Reporter reporter, int queryRepeats,
-			final Cache<String, Person> cache) throws Exception {
-		for (int i = 0; i < queryRepeats; i++) {
-			TimedTask distributedTaskQuery = new TimedTask(
-					"DistributedTask Query", reporter) {
-				String output;
-				@Override
-				protected void doExecute() throws Exception {
-					output = doDistributedTaskQuery(cache);
-				}
-				
-				@Override
-				protected String getResult() {
-					return output;
-				}
-				
-			};
-			distributedTaskQuery.execute();
-		}
-		
+	private TimedTask createTimeWasteTask(Cache<String, Person> cache) {
+		return new TimeWastingTask(cache);		
 	}
 
-	private String doDistributedTaskQuery(Cache<String, Person> cache)
-			throws InterruptedException, ExecutionException {
-		DistributedExecutorService des = new DefaultExecutorService(cache);
-		PersonCountCallable pcc = new PersonCountCallable(new PersonCityFilter(
-				"Bangalore"));
-		List<Future<Integer>> results = des.submitEverywhere(pcc);
-		int personCount = 0;
-		for (Future<Integer> f : results) {
-			personCount += f.get();
-		}
-		return "Count: " + personCount;
+	private TimedTask createBangalorePersonCountQuery(Cache<String, Person> cache) {
+		return new BangalorePersonCountQueryTask(cache);		
 	}
 
+	private TimedTask createBangalorePersonQuery(Cache<String, Person> cache) {
+		return new BangalorePersonQueryTask(cache);		
+	}
+
+	private TimedTask createGMTPersonQuery(Cache<String, Person> cache) {
+		return new GMTPersonQueryTask(cache);		
+	}
+
+	private TimedTask createLadyAvgSalQuery(Cache<String, Person> cache) {
+		return new PersonAverageSalQueryTask(cache);		
+	}
+
+	
 	@Override
 	protected int getNodeId() {
 		return 2;
