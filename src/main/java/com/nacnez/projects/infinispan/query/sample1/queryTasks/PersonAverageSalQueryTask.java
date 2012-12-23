@@ -21,7 +21,7 @@ public class PersonAverageSalQueryTask extends PrototypeTimedTask {
 	
 	
 	public PersonAverageSalQueryTask(Cache<String, Person> cache) {
-		super("DistributedTask Query");
+		super("DistributedTask Query Lady Average Salary");
 		this.cache = cache;
 	}
 

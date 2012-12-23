@@ -24,28 +24,26 @@ package com.nacnez.projects.infinispan.query.sample1;
 
 import static com.nacnez.projects.grid.modelCreator.DataCreator.createData;
 import static com.nacnez.util.microbenchmarktool.MicroBenchmarkTool.newSimpleExecutor;
-import static com.nacnez.util.microbenchmarktool.MicroBenchmarkTool.newStandardOutputReporter;
+import static com.nacnez.util.microbenchmarktool.MicroBenchmarkTool.newStatRichSimpleFileOutputReporter;
 
-import java.util.ArrayList;
+import java.text.SimpleDateFormat;
 import java.util.Collection;
-import java.util.List;
+import java.util.Date;
 
 import org.infinispan.Cache;
 
 import com.nacnez.projects.grid.model.Person;
-import com.nacnez.projects.infinispan.query.sample1.filter.GMTClosePersonFilter;
-import com.nacnez.projects.infinispan.query.sample1.filter.LadyFiveDigitSalaryGettersFilter;
-import com.nacnez.projects.infinispan.query.sample1.filter.PersonCityFilter;
-import com.nacnez.projects.infinispan.query.sample1.filter.PersonFilter;
 import com.nacnez.projects.infinispan.query.sample1.queryTasks.BangalorePersonCountQueryTask;
 import com.nacnez.projects.infinispan.query.sample1.queryTasks.BangalorePersonQueryTask;
-import com.nacnez.projects.infinispan.query.sample1.queryTasks.GMTPersonQueryTask;
+import com.nacnez.projects.infinispan.query.sample1.queryTasks.IndiaPersonQueryTask;
 import com.nacnez.projects.infinispan.query.sample1.queryTasks.PersonAverageSalQueryTask;
-import com.nacnez.projects.infinispan.query.sample1.queryTasks.TimeWastingTask;
 import com.nacnez.util.microbenchmarktool.TimedTask;
 
 public class Node2 extends AbstractNode {
 
+	public static final String REPORT_BASE_PATH = "/home/narayasr/MyRoot/WorkArea/PerfBenchmarks/infinispan/";
+
+	private static final String TXT_EXTN = ".txt";
 
 	public static void main(String[] args) throws Exception {
 		new Node2().run();
@@ -61,97 +59,58 @@ public class Node2 extends AbstractNode {
 		}
 		cache.clear();
 
-		// Add a listener so that we can see the puts to this node
-		cache.addListener(new LoggingListener());
+		for (int i = 0; i < 6; i++) {
+			doMeasure(cache, fullFileName("Test-4Nodes-" + ((i + 1) * 5000)
+					+ " - "));
+		}
 
-		// Put a few entries into the cache so that we can see them distribution
-		// to the other nodes
-		Collection<Person> data = createData(1000);
+	}
 
-		int generatedDataBasedExpectedCountCity = 0;
-		int generatedDataBasedExpectedCountLadyAvg = 0;
-		Double generatedDataBasedExpectedSalLadyAvg = new Double(0.0);
-		int generatedDataBasedExpectedCountGMT = 0;
-		int totalCount = 0;
-		List<String> personIds = new ArrayList<String>();
-		PersonFilter pf = new PersonCityFilter("Bangalore");
-		PersonFilter pfl = new LadyFiveDigitSalaryGettersFilter();
-		PersonFilter pfg = new GMTClosePersonFilter();
-		
+	private void doMeasure(Cache<String, Person> cache, String fileName) {
+		Collection<Person> data = createData(5000);
 
-		System.out.println("Started Loading the grid");
-		
 		for (Person p : data) {
-			personIds.add(p.getUniqueId());
-			if (pf.applicable(p)) {
-				generatedDataBasedExpectedCountCity++;
-			}
-			if (pfl.applicable(p)) {
-				generatedDataBasedExpectedSalLadyAvg = generatedDataBasedExpectedSalLadyAvg +p.getIncome();
-				generatedDataBasedExpectedCountLadyAvg++;
-			}
-			if (pfg.applicable(p)) {
-				generatedDataBasedExpectedCountGMT++;
-			}
 			cache.put(p.getUniqueId(), p);
-			totalCount++;
-			if (totalCount%1000==0) {
-				System.out.println("1000 more added to Grid!");
-			}
 		}
 
-		try {
-			Thread.sleep(3000);
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		}
-
-//		newSimpleExecutor().with(newStatRichSimpleStandardOutputReporter()).execute(createBangalorePersonCountQuery(cache), 50).report();
-//		newSimpleExecutor().with(newStatRichSimpleStandardOutputReporter()).execute(createBangalorePersonQuery(cache), 50).report();
-//		newSimpleExecutor().with(newStatRichSimpleStandardOutputReporter()).execute(createGMTPersonQuery(cache), 50).report();
-//		newSimpleExecutor().with(newStatRichSimpleStandardOutputReporter()).execute(createLadyAvgSalQuery(cache), 50).report();
-
-//		System.out.println("Expected Result Bangalore : " + generatedDataBasedExpectedCountCity);
-//		newSimpleExecutor().with(newStatRichStandardOutputReporter()).execute(createBangalorePersonCountQuery(cache), 50).report();
-//		System.out.println("Expected Result  Bangalore : " + generatedDataBasedExpectedCountCity);
-//		newSimpleExecutor().with(newStatRichStandardOutputReporter()).execute(createBangalorePersonQuery(cache), 50).report();
-//		System.out.println("Expected Result GMT: " + generatedDataBasedExpectedCountGMT);
-//		newSimpleExecutor().with(newStatRichStandardOutputReporter()).execute(createGMTPersonQuery(cache), 50).report();
-//		System.out.println("Expected Result Lady Avg: " + generatedDataBasedExpectedSalLadyAvg/generatedDataBasedExpectedCountLadyAvg);
-//		System.out.println("Expected Result Lady Sal Sum: " + generatedDataBasedExpectedSalLadyAvg);
-//		System.out.println("Expected Result Lady Count: " + generatedDataBasedExpectedCountLadyAvg);
-//
-//		newSimpleExecutor().with(newStatRichStandardOutputReporter()).execute(createLadyAvgSalQuery(cache), 50).report();
-		
-		newSimpleExecutor().with(newStandardOutputReporter()).execute(createTimeWasteTask(cache), 1).report();
-
+		newSimpleExecutor().with(newStatRichSimpleFileOutputReporter(fileName))
+				.execute(createBangalorePersonCountQuery(cache), 50).report();
+		newSimpleExecutor().with(newStatRichSimpleFileOutputReporter(fileName))
+				.execute(createBangalorePersonQuery(cache), 50).report();
+		newSimpleExecutor().with(newStatRichSimpleFileOutputReporter(fileName))
+				.execute(createLadyAvgSalQuery(cache), 50).report();
+		newSimpleExecutor().with(newStatRichSimpleFileOutputReporter(fileName))
+				.execute(createGMTPersonQuery(cache), 50).report();
 	}
 
-	private TimedTask createTimeWasteTask(Cache<String, Person> cache) {
-		return new TimeWastingTask(cache);		
+	private String fullFileName(String basicName) {
+		return REPORT_BASE_PATH + basicName + nowInString() + TXT_EXTN;
 	}
 
-	private TimedTask createBangalorePersonCountQuery(Cache<String, Person> cache) {
-		return new BangalorePersonCountQueryTask(cache);		
+	public static String nowInString() {
+		return new SimpleDateFormat("yyyyMMddhhmmssSSS").format(new Date());
+	}
+
+	private TimedTask createBangalorePersonCountQuery(
+			Cache<String, Person> cache) {
+		return new BangalorePersonCountQueryTask(cache);
 	}
 
 	private TimedTask createBangalorePersonQuery(Cache<String, Person> cache) {
-		return new BangalorePersonQueryTask(cache);		
+		return new BangalorePersonQueryTask(cache);
 	}
 
 	private TimedTask createGMTPersonQuery(Cache<String, Person> cache) {
-		return new GMTPersonQueryTask(cache);		
+		return new IndiaPersonQueryTask(cache);
 	}
 
 	private TimedTask createLadyAvgSalQuery(Cache<String, Person> cache) {
-		return new PersonAverageSalQueryTask(cache);		
+		return new PersonAverageSalQueryTask(cache);
 	}
 
-	
 	@Override
 	protected int getNodeId() {
 		return 2;
 	}
-
 
 }

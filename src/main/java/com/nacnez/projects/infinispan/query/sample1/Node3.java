@@ -35,10 +35,6 @@ public class Node3 extends AbstractNode {
    public void run() {
       Cache<String, Person> cache = getCacheManager().getCache("Person");
       
-      // Add a listener so that we can see the puts to this node
-      cache.addListener(new LoggingListener());
-
-//      waitForClusterToForm();
    }
    
    @Override

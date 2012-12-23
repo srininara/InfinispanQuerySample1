@@ -22,7 +22,7 @@ public class BangalorePersonQueryTask extends PrototypeTimedTask {
 	
 	
 	public BangalorePersonQueryTask(Cache<String, Person> cache) {
-		super("DistributedTask Query For Persons");
+		super("DistributedTask Query For Persons with City Bangalore");
 		this.cache = cache;
 	}
 

@@ -21,7 +21,7 @@ public class BangalorePersonCountQueryTask extends PrototypeTimedTask {
 	
 	
 	public BangalorePersonCountQueryTask(Cache<String, Person> cache) {
-		super("DistributedTask Query");
+		super("DistributedTask Query For Count of Persons with City Bangalore");
 		this.cache = cache;
 	}
 

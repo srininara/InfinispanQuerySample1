@@ -10,19 +10,19 @@ import org.infinispan.distexec.DefaultExecutorService;
 import org.infinispan.distexec.DistributedExecutorService;
 
 import com.nacnez.projects.grid.model.Person;
-import com.nacnez.projects.infinispan.query.sample1.filter.GMTClosePersonFilter;
+import com.nacnez.projects.infinispan.query.sample1.filter.IndiaClosePersonFilter;
 import com.nacnez.util.microbenchmarktool.TimedTask;
 import com.nacnez.util.microbenchmarktool.core.PrototypeTimedTask;
 
-public class GMTPersonQueryTask extends PrototypeTimedTask {
+public class IndiaPersonQueryTask extends PrototypeTimedTask {
 
 	private static final long serialVersionUID = 1L;
 	String output;
 	Cache<String, Person> cache;
 	
 	
-	public GMTPersonQueryTask(Cache<String, Person> cache) {
-		super("DistributedTask Query For Persons");
+	public IndiaPersonQueryTask(Cache<String, Person> cache) {
+		super("DistributedTask Query For Persons Near India");
 		this.cache = cache;
 	}
 
@@ -48,13 +48,13 @@ public class GMTPersonQueryTask extends PrototypeTimedTask {
 	
 	@Override
 	public TimedTask clone() {
-		return new GMTPersonQueryTask(cache);
+		return new IndiaPersonQueryTask(cache);
 	}
 	
 	private String doDistributedTaskQuery()
 			throws InterruptedException, ExecutionException {
 		DistributedExecutorService des = new DefaultExecutorService(cache);
-		PersonCallable pcc = new PersonCallable(new GMTClosePersonFilter());
+		PersonCallable pcc = new PersonCallable(new IndiaClosePersonFilter());
 		List<Future<Collection<Person>>> results = des.submitEverywhere(pcc);
 		int personCount = 0;
 		for (Future<Collection<Person>> f : results) {
